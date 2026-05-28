@@ -3,379 +3,141 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>D365 FO – Sales Order &amp; WMS</title>
+<title>D365 FO – Prozess &amp; Datenmodell Explorer</title>
 <style>
-  *{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;background:#f0f2f5;color:#1a1a1a}
-  .header{background:#1e293b;color:#fff;padding:12px 28px;box-shadow:0 2px 8px rgba(0,0,0,.15);z-index:100;position:relative}
-  .header h1{font-size:15px;font-weight:600}
-  .header .subtitle{font-size:11px;opacity:.7;margin-top:2px}
-  .legend-bar{background:#fff;border-bottom:1px solid #e2e8f0;padding:6px 28px;display:flex;gap:20px;align-items:center;flex-wrap:wrap;font-size:11px;color:#64748b}
-  .legend-item{display:flex;align-items:center;gap:5px}
-  .legend-line{width:30px;height:0}
-  .legend-line.one-n{border-top:2.5px solid #6366f1}
-  .legend-line.one-one{border-top:2.5px solid #10b981}
-  .legend-swatch{width:12px;height:12px;border-radius:3px}
-  .legend-swatch.link{background:#fef3c7;border:2px solid #f59e0b}
-  .canvas-wrap{width:100vw;height:calc(100vh - 82px);overflow:auto;position:relative}
-  .canvas{position:relative;width:1200px;height:750px;margin:0 auto}
-  .lines-layer{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1}
-  .rel-group{opacity:0;transition:opacity .6s ease}
-  .rel-group.visible{opacity:1}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;background:#f0f2f5;color:#1a1a1a;display:flex;height:100vh}
 
-  /* Entity cards */
-  .entity{position:absolute;background:#fff;border:2px solid #e2e8f0;border-radius:10px;width:200px;cursor:pointer;transition:all .3s ease;z-index:10;box-shadow:0 1px 4px rgba(0,0,0,.06);overflow:hidden;opacity:.3}
-  .entity.revealed{opacity:1}
-  .entity:hover{border-color:#6366f1;box-shadow:0 4px 20px rgba(99,102,241,.18);transform:translateY(-2px);opacity:1}
-  .entity.active{border-color:#6366f1;opacity:1;box-shadow:0 0 0 3px rgba(99,102,241,.2),0 4px 20px rgba(99,102,241,.18)}
-  .entity.link-table{background:#fffbeb;border-color:#f59e0b}
-  .entity.link-table:hover,.entity.link-table.active{border-color:#d97706;box-shadow:0 4px 20px rgba(245,158,11,.2)}
-  .entity.no-link{border-color:#e2e8f0;opacity:.15!important}
-  .entity-header{padding:8px 12px 4px;border-bottom:1px solid #f1f5f9;background:#f8fafc}
-  .entity.link-table .entity-header{background:#fef9e7}
-  .entity-header h3{font-size:12px;font-weight:700;color:#1e293b}
-  .entity-header .table-name{font-size:9px;color:#6366f1;font-family:'Cascadia Code','Fira Code',monospace;margin-top:1px}
-  .entity.link-table .entity-header .table-name{color:#d97706}
-  .entity-body{padding:6px 12px 8px}
-  .entity-body .pk{font-size:9px;font-family:monospace;color:#64748b;margin-bottom:3px}
-  .entity-body .pk span{background:#e0e7ff;color:#4338ca;padding:1px 4px;border-radius:3px;font-weight:600}
-  .entity.link-table .entity-body .pk span{background:#fef3c7;color:#92400e}
-  .entity-body .desc{font-size:10px;color:#64748b;line-height:1.3}
-  .card-badge{font-size:10px;font-weight:700;fill:#fff;text-anchor:middle;dominant-baseline:central}
+/* Sidebar */
+.sidebar{width:260px;background:#1e293b;color:#fff;flex-shrink:0;display:flex;flex-direction:column;overflow-y:auto}
+.sidebar-header{padding:20px 20px 16px;border-bottom:1px solid #334155}
+.sidebar-header h2{font-size:15px;font-weight:700;letter-spacing:-.3px}
+.sidebar-header .sub{font-size:10px;opacity:.5;margin-top:3px}
+.nav-section{padding:12px 0 4px}
+.nav-section-title{padding:4px 20px 8px;font-size:9px;text-transform:uppercase;letter-spacing:1.2px;color:#475569;font-weight:700}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 20px;font-size:12px;color:#94a3b8;text-decoration:none;transition:all .15s;border-left:3px solid transparent}
+.nav-item:hover{background:#334155;color:#e2e8f0;border-left-color:#6366f1}
+.nav-item.active{background:#6366f1;color:#fff;border-left-color:#818cf8}
+.nav-icon{width:18px;height:18px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0}
+.nav-icon.so{background:#7c3aed;color:#fff}
+.nav-icon.po{background:#3b82f6;color:#fff}
+.nav-icon.pr{background:#f59e0b;color:#fff}
+.nav-icon.to{background:#14b8a6;color:#fff}
+.nav-icon.qo{background:#ef4444;color:#fff}
+.nav-icon.im{background:#8b5cf6;color:#fff}
+.nav-badge{margin-left:auto;font-size:9px;padding:2px 7px;border-radius:8px;background:#334155;color:#64748b;font-weight:600}
+.nav-badge.ready{background:#dcfce7;color:#166534}
+.nav-badge.wip{background:#fef3c7;color:#92400e}
+.sidebar-footer{margin-top:auto;padding:16px 20px;border-top:1px solid #334155;font-size:9px;color:#475569;line-height:1.5}
 
-  /* Process badges - attached to entities */
-  .process-badge{position:absolute;z-index:20;display:flex;align-items:center;gap:4px;padding:4px 10px 4px 6px;border-radius:16px;font-size:10px;font-weight:600;color:#fff;cursor:pointer;transition:all .25s ease;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.15);background:#94a3b8;opacity:.5}
-  .process-badge .step-num{width:18px;height:18px;border-radius:50%;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0}
-  .process-badge.done{opacity:.75}
-  .process-badge.active-step{opacity:1;transform:scale(1.08);box-shadow:0 4px 14px rgba(0,0,0,.25)}
-  .process-badge:hover{opacity:1!important;transform:scale(1.06)}
-  .process-badge.choice-ready{animation:choicePulse 1.2s ease-in-out infinite;opacity:.85!important;cursor:pointer}
-  @keyframes choicePulse{0%,100%{transform:scale(1);box-shadow:0 2px 6px rgba(0,0,0,.15)}50%{transform:scale(1.06);box-shadow:0 4px 18px rgba(0,0,0,.3)}}
-  .process-badge.choice-dimmed{opacity:.2!important;transform:scale(.92);filter:grayscale(.5)}
-  .oder-label{position:absolute;z-index:25;font-size:10px;font-weight:800;color:#94a3b8;background:#f0f2f5;padding:2px 8px;border-radius:8px;border:1.5px dashed #cbd5e1;display:none;white-space:nowrap}
-  .oder-label.show{display:block}
-  .c1{background:#7c3aed}.c2{background:#6366f1}.c3{background:#3b82f6}
-  .c4{background:#0ea5e9}.c5{background:#14b8a6}.c6a{background:#10b981}.c6b{background:#ef4444}
-
-  .entity.glow{animation:pg 1.5s ease-in-out infinite}
-  @keyframes pg{0%,100%{box-shadow:0 0 0 3px rgba(99,102,241,.15)}50%{box-shadow:0 0 0 8px rgba(99,102,241,.3)}}
-  .entity.link-table.glow{animation:pga 1.5s ease-in-out infinite}
-  @keyframes pga{0%,100%{box-shadow:0 0 0 3px rgba(245,158,11,.15)}50%{box-shadow:0 0 0 8px rgba(245,158,11,.3)}}
-
-  /* Info panel */
-  .info-panel{position:fixed;bottom:16px;right:16px;width:370px;background:#fff;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.12);border:1px solid #e2e8f0;z-index:200;overflow:hidden;transition:all .3s ease;max-height:0;opacity:0}
-  .info-panel.visible{max-height:600px;opacity:1}
-  .info-panel-header{padding:10px 14px;background:#1e293b;color:#fff;font-size:12px;font-weight:600;display:flex;justify-content:space-between;align-items:center}
-  .info-panel-header .close-btn{background:none;border:none;color:#fff;cursor:pointer;font-size:15px;opacity:.7}
-  .info-panel-header .close-btn:hover{opacity:1}
-  .info-panel-body{padding:12px 14px;font-size:11px;line-height:1.6;color:#475569;max-height:480px;overflow-y:auto}
-  .info-panel-body strong{color:#1e293b}
-  .info-panel-body .field-item{padding:2px 0;border-bottom:1px solid #f1f5f9;font-family:monospace;font-size:10px}
-  .info-panel-body .field-item:last-child{border:none}
-  .info-panel-body .new-tag{display:inline-block;background:#dcfce7;color:#166534;font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;margin-left:3px}
-  .info-panel-body .warn-tag{display:inline-block;background:#fef2f2;color:#991b1b;font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;margin-left:3px}
-  .info-panel-body .option-box{margin:6px 0;padding:8px 10px;border-radius:8px;border:2px solid #e2e8f0}
-  .info-panel-body .option-box.green{border-color:#10b981;background:#f0fdf4}
-  .info-panel-body .option-box.red{border-color:#ef4444;background:#fef2f2}
-  .info-panel-body .option-box h4{font-size:11px;margin-bottom:3px}
-
-  /* Controls */
-  .step-controls{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:200;background:#fff;padding:6px 12px;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,.1);border:1px solid #e2e8f0;align-items:center}
-  .step-btn{padding:6px 14px;border-radius:8px;border:none;font-size:11px;font-weight:600;cursor:pointer;transition:all .2s}
-  .step-btn.prev{background:#e2e8f0;color:#475569}.step-btn.prev:hover{background:#cbd5e1}
-  .step-btn.next{background:#6366f1;color:#fff}.step-btn.next:hover{background:#4f46e5}
-  .step-btn.reset{background:#f1f5f9;color:#64748b}.step-btn.reset:hover{background:#e2e8f0}
-  .step-btn.opt-a{background:#10b981;color:#fff;font-size:10px;padding:6px 8px}.step-btn.opt-a:hover{background:#059669}
-  .step-btn.opt-b{background:#ef4444;color:#fff;font-size:10px;padding:6px 8px}.step-btn.opt-b:hover{background:#dc2626}
-  .step-btn:disabled{opacity:.3;cursor:default}
-  .step-indicator{display:flex;align-items:center;gap:3px;padding:0 5px}
-  .step-dot{width:7px;height:7px;border-radius:50%;background:#e2e8f0;transition:all .3s}
-  .step-dot.filled{background:#6366f1}
-  .step-dot.current{background:#6366f1;transform:scale(1.4)}
-  .step-dot.current-a{background:#10b981;transform:scale(1.4)}
-  .step-dot.current-b{background:#ef4444;transform:scale(1.4)}
-  .separator{width:1px;height:24px;background:#e2e8f0;margin:0 3px}
-  #step6options{display:none;gap:4px;align-items:center}
-  #step6options.show{display:flex}
-
+/* Main content */
+.main{flex:1;display:flex;flex-direction:column;overflow:auto}
+.hero{padding:60px 40px;text-align:center;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.hero h1{font-size:28px;font-weight:700;color:#1e293b;margin-bottom:8px}
+.hero .hero-sub{font-size:14px;color:#64748b;max-width:500px;line-height:1.6;margin-bottom:40px}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:900px;width:100%}
+.card{background:#fff;border:2px solid #e2e8f0;border-radius:12px;padding:20px;text-align:left;transition:all .2s;cursor:pointer;text-decoration:none;color:inherit}
+.card:hover{border-color:#6366f1;box-shadow:0 8px 30px rgba(99,102,241,.12);transform:translateY(-3px)}
+.card-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#fff;margin-bottom:12px}
+.card h3{font-size:13px;font-weight:700;color:#1e293b;margin-bottom:4px}
+.card p{font-size:11px;color:#64748b;line-height:1.5}
+.card .card-status{margin-top:10px;font-size:9px;font-weight:700;padding:2px 8px;border-radius:6px;display:inline-block}
+.card .card-status.ready{background:#dcfce7;color:#166534}
+.card .card-status.wip{background:#fef3c7;color:#92400e}
+.card .card-status.planned{background:#f1f5f9;color:#64748b}
 </style>
 </head>
 <body>
 
-<div class="header">
-  <div>
-    <h1>D365 Finance & Operations – Sales Order & WMS</h1>
-    <div class="subtitle">Prozessschritte durchklicken – Badges an Entitaeten | Schritt 6 mit zwei Varianten</div>
+<nav class="sidebar">
+  <div class="sidebar-header">
+    <h2>D365 FO Explorer</h2>
+    <div class="sub">Prozesse &amp; Datenmodelle</div>
   </div>
-</div>
-<div class="legend-bar">
-  <div class="legend-item"><div class="legend-line one-n"></div> 1 : n</div>
-  <div class="legend-item"><div class="legend-line one-one"></div> 1 : 1</div>
-  <div class="legend-item"><div class="legend-swatch link"></div> Link-Tabelle</div>
-</div>
 
-<div class="canvas-wrap">
-<div class="canvas" id="canvas">
+  <div class="nav-section">
+    <div class="nav-section-title">Prozesse</div>
+    <a class="nav-item active" href="index.html">
+      <div class="nav-icon so">H</div> Hub
+    </a>
+    <a class="nav-item" href="sales-order-wms.html">
+      <div class="nav-icon so">SO</div> Sales Order &amp; WMS
+      <span class="nav-badge ready">Live</span>
+    </a>
+    <a class="nav-item" href="purchase-order.html">
+      <div class="nav-icon po">PO</div> Purchase Order (P2P)
+      <span class="nav-badge ready">Live</span>
+    </a>
+    <a class="nav-item" href="production-order.html">
+      <div class="nav-icon pr">PR</div> Production Order
+      <span class="nav-badge wip">Geplant</span>
+    </a>
+    <a class="nav-item" href="transfer-order.html">
+      <div class="nav-icon to">TO</div> Transfer Order
+      <span class="nav-badge wip">Geplant</span>
+    </a>
+    <a class="nav-item" href="quality-order.html">
+      <div class="nav-icon qo">QO</div> Quality Order
+      <span class="nav-badge wip">Geplant</span>
+    </a>
+    <a class="nav-item" href="inventory-movement.html">
+      <div class="nav-icon im">IM</div> Inventory Movement
+      <span class="nav-badge wip">Geplant</span>
+    </a>
+  </div>
 
-  <svg class="lines-layer" viewBox="0 0 1200 750">
-    <defs>
-      <marker id="a1n" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><path d="M0,0 L10,3.5 L0,7" fill="#6366f1"/></marker>
-      <marker id="a11" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><path d="M0,0 L10,3.5 L0,7" fill="#10b981"/></marker>
-      <marker id="aamb" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><path d="M0,0 L10,3.5 L0,7" fill="#f59e0b"/></marker>
-    </defs>
+  <div class="sidebar-footer">
+    D365 Finance &amp; Operations<br>
+    Datenrelationen &amp; Prozessablaeufe<br>
+    Interaktiv &amp; navigierbar
+  </div>
+</nav>
 
-    <!-- RELATION GROUPS -->
-    <!-- Step 1: SalesTable 1:n SalesLine -->
-    <g class="rel-group" data-step="1">
-      <line x1="150" y1="140" x2="150" y2="235" stroke="#6366f1" stroke-width="2.5" marker-end="url(#a1n)"/>
-      <rect x="124" y="178" width="54" height="18" rx="9" fill="#6366f1"/>
-      <text x="151" y="188" class="card-badge">1 : n</text>
-    </g>
-    <!-- Step 1: SalesLine -> Load -->
-    <g class="rel-group" data-step="1">
-      <line x1="258" y1="275" x2="398" y2="120" stroke="#6366f1" stroke-width="2.5" marker-end="url(#a1n)"/>
-      <rect x="300" y="180" width="54" height="18" rx="9" fill="#6366f1"/>
-      <text x="327" y="190" class="card-badge">1 : n</text>
-    </g>
-    <!-- Step 1: Load 1:n Shipment -->
-    <g class="rel-group" data-step="1">
-      <line x1="600" y1="100" x2="798" y2="100" stroke="#6366f1" stroke-width="2.5" marker-end="url(#a1n)"/>
-      <rect x="672" y="86" width="54" height="18" rx="9" fill="#6366f1"/>
-      <text x="699" y="96" class="card-badge">1 : n</text>
-    </g>
-    <!-- Step 3: Shipment 1:n Container -->
-    <g class="rel-group" data-step="3">
-      <line x1="900" y1="140" x2="900" y2="235" stroke="#6366f1" stroke-width="2.5" marker-end="url(#a1n)"/>
-      <rect x="874" y="178" width="54" height="18" rx="9" fill="#6366f1"/>
-      <text x="901" y="188" class="card-badge">1 : n</text>
-    </g>
-    <!-- Step 6a: SalesTable 1:n CustPackingSlipJour -->
-    <g class="rel-group" data-step="6a">
-      <path d="M75,140 L75,430" stroke="#6366f1" stroke-width="2.5" fill="none" marker-end="url(#a1n)"/>
-      <rect x="49" y="330" width="54" height="18" rx="9" fill="#6366f1"/>
-      <text x="76" y="340" class="card-badge">1 : n</text>
-    </g>
-    <!-- Step 6a-link: PackingSlip 1:1 Link -->
-    <g class="rel-group" data-step="6a-link">
-      <line x1="258" y1="480" x2="398" y2="480" stroke="#10b981" stroke-width="2.5" marker-end="url(#a11)"/>
-      <rect x="302" y="468" width="50" height="18" rx="9" fill="#10b981"/>
-      <text x="327" y="478" class="card-badge">1 : 1</text>
-    </g>
-    <!-- Step 6a-link: Link 1:1 Shipment -->
-    <g class="rel-group" data-step="6a-link">
-      <path d="M600,480 L740,480 L740,140" stroke="#10b981" stroke-width="2.5" fill="none" marker-end="url(#a11)"/>
-      <rect x="714" y="310" width="50" height="18" rx="9" fill="#10b981"/>
-      <text x="739" y="320" class="card-badge">1 : 1</text>
-    </g>
+<main class="main">
+  <div class="hero">
+    <h1>D365 FO – Prozess &amp; Datenmodell Explorer</h1>
+    <p class="hero-sub">Interaktive Darstellung der wichtigsten D365 Finance &amp; Operations Prozesse mit Datenrelationen, Entitaeten und Schritt-fuer-Schritt Navigation.</p>
 
-  </svg>
-
-  <!-- ENTITY CARDS -->
-  <!-- Row 1: Sales Order (left) - Load (center) - Shipment (right) -->
-  <div class="entity" id="e-sales-order" style="left:50px; top:50px" data-info="sales-order">
-    <div class="entity-header"><h3>Sales Order</h3><div class="table-name">SalesTable</div></div>
-    <div class="entity-body">
-      <div class="pk"><span>PK</span> SalesId</div>
-      <div class="desc">Auftragskopf</div>
+    <div class="cards">
+      <a class="card" href="sales-order-wms.html">
+        <div class="card-icon" style="background:#7c3aed">SO</div>
+        <h3>Sales Order &amp; WMS</h3>
+        <p>Auftrag, Load, Shipment, Container, Work, Packing Slip mit Pick &amp; Put Prozess</p>
+        <span class="card-status ready">Live</span>
+      </a>
+      <a class="card" href="purchase-order.html">
+        <div class="card-icon" style="background:#3b82f6">PO</div>
+        <h3>Purchase Order (P2P)</h3>
+        <p>Bestellung, Bestaetigung, Wareneingang, Einlagerung, Kreditorenrechnung</p>
+        <span class="card-status ready">Live</span>
+      </a>
+      <a class="card" href="production-order.html">
+        <div class="card-icon" style="background:#f59e0b">PR</div>
+        <h3>Production Order</h3>
+        <p>Fertigungsauftrag, BOM, Route, Start, RAF, End</p>
+        <span class="card-status wip">Geplant</span>
+      </a>
+      <a class="card" href="transfer-order.html">
+        <div class="card-icon" style="background:#14b8a6">TO</div>
+        <h3>Transfer Order</h3>
+        <p>Umlagerung zwischen Lagerorten mit WMS-Integration</p>
+        <span class="card-status wip">Geplant</span>
+      </a>
+      <a class="card" href="quality-order.html">
+        <div class="card-icon" style="background:#ef4444">QO</div>
+        <h3>Quality Order</h3>
+        <p>Qualitaetspruefung, Testgruppen, Pass/Fail</p>
+        <span class="card-status wip">Geplant</span>
+      </a>
+      <a class="card" href="inventory-movement.html">
+        <div class="card-icon" style="background:#8b5cf6">IM</div>
+        <h3>Inventory Movement</h3>
+        <p>Bestandsbewegungen, Journale, Buchungen</p>
+        <span class="card-status wip">Geplant</span>
+      </a>
     </div>
   </div>
-  <div class="entity" id="e-load" style="left:400px; top:50px" data-info="load">
-    <div class="entity-header"><h3>Load</h3><div class="table-name">WHSLoadTable</div></div>
-    <div class="entity-body">
-      <div class="pk"><span>PK</span> LoadId</div>
-      <div class="desc">Ladung / Transport</div>
-    </div>
-  </div>
-  <div class="entity" id="e-shipment" style="left:800px; top:50px" data-info="shipment">
-    <div class="entity-header"><h3>Shipment</h3><div class="table-name">WHSShipmentTable</div></div>
-    <div class="entity-body">
-      <div class="pk"><span>PK</span> ShipmentId</div>
-      <div class="desc">Lieferung / Versandeinheit</div>
-    </div>
-  </div>
+</main>
 
-  <!-- Row 2: Sales Line (left) - Container (right) -->
-  <div class="entity" id="e-sales-line" style="left:50px; top:240px" data-info="sales-line">
-    <div class="entity-header"><h3>Sales Line</h3><div class="table-name">SalesLine</div></div>
-    <div class="entity-body">
-      <div class="pk"><span>PK</span> SalesId + LineNum</div>
-      <div class="desc">Auftragsposition</div>
-    </div>
-  </div>
-  <div class="entity" id="e-container" style="left:800px; top:240px" data-info="container">
-    <div class="entity-header"><h3>Container</h3><div class="table-name">WHSContainerTable</div></div>
-    <div class="entity-body">
-      <div class="pk"><span>PK</span> ContainerId</div>
-      <div class="desc">Verpackungseinheit</div>
-    </div>
-  </div>
-
-  <!-- Row 3: Packing Slip (left) - Link (center) -->
-  <div class="entity" id="e-packing-slip" style="left:50px; top:430px" data-info="packing-slip">
-    <div class="entity-header"><h3>Packing Slip</h3><div class="table-name">CustPackingSlipJour</div></div>
-    <div class="entity-body">
-      <div class="pk"><span>PK</span> PackingSlipId + SalesId</div>
-      <div class="desc">Lieferschein</div>
-    </div>
-  </div>
-  <div class="entity link-table" id="e-link" style="left:400px; top:430px" data-info="link-table">
-    <div class="entity-header"><h3>Packing Slip Link</h3><div class="table-name">WHSPackingSlipLink</div></div>
-    <div class="entity-body">
-      <div class="pk"><span>FK</span> ShipmentId + PackingSlipId</div>
-      <div class="desc">Zuordnung Lieferung &#8596; Lieferschein</div>
-    </div>
-  </div>
-
-  <!-- PROCESS BADGES -->
-  <!-- 1. Release to Warehouse -> unter Sales Order -->
-  <div class="process-badge" id="step-1" style="left:50px; top:170px" data-step="1">
-    <div class="step-num">1</div> Release to Warehouse
-  </div>
-
-  <!-- 2. Picking -> unter Load -->
-  <div class="process-badge" id="step-2" style="left:400px; top:170px" data-step="2">
-    <div class="step-num">2</div> Picking
-  </div>
-
-  <!-- 3. Packing -> unter Shipment -->
-  <div class="process-badge" id="step-3" style="left:800px; top:170px" data-step="3">
-    <div class="step-num">3</div> Packing
-  </div>
-
-  <!-- 4. Close Container -> unter Container -->
-  <div class="process-badge" id="step-4" style="left:800px; top:355px" data-step="4">
-    <div class="step-num">4</div> Close Container
-  </div>
-
-  <!-- 5. Confirm Shipment -> rechts neben Shipment -->
-  <div class="process-badge" id="step-5" style="left:1010px; top:75px" data-step="5">
-    <div class="step-num">5</div> Confirm Shipment
-  </div>
-
-  <!-- 6a. Post Packing Slip via Shipment -> an Shipment -->
-  <div class="process-badge" id="step-6a" style="left:800px; top:375px" data-step="6a">
-    <div class="step-num">6a</div> Post Packing Slip (Shipment)
-  </div>
-
-  <!-- ODER Label -->
-  <div class="oder-label" id="oderLabel" style="left:460px; top:388px">&#8592; ODER &#8594;</div>
-
-  <!-- 6b. Post Packing Slip via Sales Order -> an Sales Order -->
-  <div class="process-badge" id="step-6b" style="left:50px; top:380px" data-step="6b">
-    <div class="step-num">6b</div> Post Packing Slip (Sales Order)
-  </div>
-
-</div>
-</div>
-
-<div class="info-panel" id="infoPanel">
-  <div class="info-panel-header">
-    <span id="infoPanelTitle">Details</span>
-    <button class="close-btn" onclick="closePanel()">&#10005;</button>
-  </div>
-  <div class="info-panel-body" id="infoPanelBody"></div>
-</div>
-
-<div class="step-controls">
-  <button class="step-btn reset" onclick="resetSteps()">Reset</button>
-  <button class="step-btn prev" id="btnPrev" onclick="prevStep()" disabled>&#8592;</button>
-  <div class="step-indicator" id="stepDots">
-    <div class="step-dot" data-d="1"></div><div class="step-dot" data-d="2"></div>
-    <div class="step-dot" data-d="3"></div><div class="step-dot" data-d="4"></div>
-    <div class="step-dot" data-d="5"></div><div class="step-dot" data-d="6"></div>
-  </div>
-  <button class="step-btn next" id="btnNext" onclick="nextStep()">&#8594;</button>
-  <div class="separator"></div>
-  <div id="step6options">
-    <button class="step-btn opt-a" onclick="goToStep('6a')">6a: Shipment</button>
-    <button class="step-btn opt-b" onclick="goToStep('6b')">6b: Sales Order</button>
-  </div>
-</div>
-
-<script>
-const stepEntities = {
-  '1':['e-sales-order','e-sales-line','e-load','e-shipment'],
-  '2':['e-sales-order','e-sales-line','e-load','e-shipment'],
-  '3':['e-sales-order','e-sales-line','e-load','e-shipment','e-container'],
-  '4':['e-sales-order','e-sales-line','e-load','e-shipment','e-container'],
-  '5':['e-sales-order','e-sales-line','e-load','e-shipment','e-container'],
-  '6a':['e-sales-order','e-sales-line','e-load','e-shipment','e-container','e-packing-slip','e-link'],
-  '6b':['e-sales-order','e-sales-line','e-load','e-shipment','e-container','e-packing-slip']
-};
-const stepGlow = {
-  '1':['e-sales-order','e-sales-line','e-load','e-shipment'],
-  '2':['e-load'],
-  '3':['e-container','e-shipment'],
-  '4':['e-container'],
-  '5':['e-shipment'],
-  '6a':['e-packing-slip','e-link','e-shipment'],
-  '6b':['e-packing-slip','e-sales-order']
-};
-const stepColors = {'1':'c1','2':'c2','3':'c3','4':'c4','5':'c5','6a':'c6a','6b':'c6b'};
-const stepOrder = ['1','2','3','4','5'];
-
-const entityInfo = {
-  'sales-order':{title:'Sales Order (SalesTable)',body:'<strong>Zweck:</strong> Auftragskopf<br><br><strong>Felder:</strong><div class="field-list"><div class="field-item">SalesId (PK)</div><div class="field-item">CustAccount (FK)</div><div class="field-item">SalesStatus</div><div class="field-item">DeliveryDate, CurrencyCode</div></div><br><strong>Relationen:</strong><br>&#8594; SalesLine <strong>(1:n)</strong><br>&#8594; CustPackingSlipJour <strong>(1:n)</strong>'},
-  'sales-line':{title:'Sales Line (SalesLine)',body:'<strong>Zweck:</strong> Auftragsposition<br><br><strong>Felder:</strong><div class="field-list"><div class="field-item">SalesId + LineNum (PK)</div><div class="field-item">ItemId, SalesQty, SalesPrice</div></div><br><strong>Relationen:</strong><br>&#8592; SalesTable <strong>(n:1)</strong><br>&#8594; WHSLoadTable <strong>(1:n)</strong>'},
-  'load':{title:'Load (WHSLoadTable)',body:'<strong>Zweck:</strong> Ladung / Transport<br><br><strong>Felder:</strong><div class="field-list"><div class="field-item">LoadId (PK)</div><div class="field-item">LoadStatus</div><div class="field-item">CarrierCode, TrailerId</div></div><br><strong>Relationen:</strong><br>&#8594; WHSShipmentTable <strong>(1:n)</strong>'},
-  'shipment':{title:'Shipment (WHSShipmentTable)',body:'<strong>Zweck:</strong> Lieferung<br><br><strong>Felder:</strong><div class="field-list"><div class="field-item">ShipmentId (PK)</div><div class="field-item">ShipmentStatus</div><div class="field-item">LoadId (FK)</div></div><br><strong>Relationen:</strong><br>&#8592; WHSLoadTable <strong>(n:1)</strong><br>&#8594; WHSContainerTable <strong>(1:n)</strong><br>&#8596; WHSPackingSlipLink <strong>(1:1)</strong>'},
-  'container':{title:'Container (WHSContainerTable)',body:'<strong>Zweck:</strong> Verpackungseinheit<br><br><strong>Felder:</strong><div class="field-list"><div class="field-item">ContainerId (PK)</div><div class="field-item">ShipmentId (FK)</div><div class="field-item">Weight, Height, Width</div><div class="field-item">ContainerStatus</div></div><br><strong>Relationen:</strong><br>&#8592; WHSShipmentTable <strong>(n:1)</strong>'},
-  'packing-slip':{title:'Packing Slip (CustPackingSlipJour)',body:'<strong>Zweck:</strong> Gebuchter Lieferschein<br><br><strong>Felder:</strong><div class="field-list"><div class="field-item">PackingSlipId + SalesId (PK)</div><div class="field-item">DeliveryDate, Qty</div></div><br><strong>Relationen:</strong><br>&#8592; SalesTable <strong>(n:1)</strong><br>&#8596; WHSPackingSlipLink <strong>(1:1)</strong> <em>(nur via Shipment)</em>'},
-  'link-table':{title:'Packing Slip Link (WHSPackingSlipLink)',body:'<strong>Zweck:</strong> Zuordnung Shipment &#8596; Packing Slip<br><br><strong>Felder:</strong><div class="field-list"><div class="field-item">ShipmentId (FK)</div><div class="field-item">PackingSlipId (FK)</div></div><br><strong>Erzeugt bei:</strong> 6a (Post via Shipment)<br><strong>NICHT bei:</strong> 6b (Post via Sales Order)<br><br><strong>Relationen:</strong><br>&#8596; CustPackingSlipJour <strong>(1:1)</strong><br>&#8596; WHSShipmentTable <strong>(1:1)</strong>'}
-};
-
-const stepDescriptions = {
-  '1':'<strong>1. Release to Warehouse</strong><br><br>Auftrag ans Lager freigeben.<br><br><strong>Was passiert:</strong><br>&#8226; WHSLoadTable wird erzeugt<br>&#8226; WHSShipmentTable wird erzeugt<br>&#8226; Wave &#8594; Work erstellt<br><br><strong>Neue Relationen:</strong><br>SalesTable &#8594; SalesLine <strong>(1:n)</strong> <span class="new-tag">NEU</span><br>SalesLine &#8594; WHSLoadTable <strong>(1:n)</strong> <span class="new-tag">NEU</span><br>WHSLoadTable &#8594; WHSShipmentTable <strong>(1:n)</strong> <span class="new-tag">NEU</span>',
-  '2':'<strong>2. Picking</strong><br><br>Work ausfuehren.<br><br><strong>Was passiert:</strong><br>&#8226; Pick-Work via RF/Mobile<br>&#8226; Ware entnommen &#8594; Staging<br><br><em>Keine neuen Relationen</em>',
-  '3':'<strong>3. Packing (Pack Station)</strong><br><br>Ware in Container verpacken.<br><br><strong>Was passiert:</strong><br>&#8226; WHSContainerTable erstellt<br>&#8226; Ware in Container gescannt<br><br><strong>Neue Relation:</strong><br>WHSShipmentTable &#8594; WHSContainerTable <strong>(1:n)</strong> <span class="new-tag">NEU</span>',
-  '4':'<strong>4. Close Container</strong><br><br>Container abschliessen.<br><br><strong>Was passiert:</strong><br>&#8226; Gewicht/Masse erfasst<br>&#8226; Status &#8594; Closed<br><br><em>Keine neuen Relationen</em>',
-  '5':'<strong>5. Confirm Shipment</strong><br><br>Lieferung bestaetigen.<br><br><strong>Was passiert:</strong><br>&#8226; Status &#8594; Shipped<br>&#8226; Alle Container geschlossen<br><br><em>Keine neuen Relationen</em><br><br><strong>&#8594; Waehle unten 6a oder 6b!</strong>',
-  '6a':'<strong>6a. Post Packing Slip &#8211; via Shipment</strong><br><br><div class="option-box green"><h4>&#9989; WHSPackingSlipLink wird geschrieben!</h4>Lieferschein aus <strong>Shipment</strong> gebucht.<br><br>&#8226; CustPackingSlipJour erstellt<br>&#8226; <strong>WHSPackingSlipLink</strong> erzeugt<br>&#8226; Bestand abgebucht<br><br><strong>Neue Relationen:</strong><br>SalesTable &#8594; CustPackingSlipJour <strong>(1:n)</strong> <span class="new-tag">NEU</span><br>CustPackingSlipJour &#8596; WHSPackingSlipLink <strong>(1:1)</strong> <span class="new-tag">NEU</span><br>WHSPackingSlipLink &#8596; WHSShipmentTable <strong>(1:1)</strong> <span class="new-tag">NEU</span></div>',
-  '6b':'<strong>6b. Post Packing Slip &#8211; via Sales Order</strong><br><br><div class="option-box red"><h4>&#10060; WHSPackingSlipLink wird NICHT geschrieben!</h4>Lieferschein direkt vom <strong>Sales Order</strong> gebucht.<br><br>&#8226; CustPackingSlipJour erstellt<br>&#8226; Bestand abgebucht<br>&#8226; <strong>Kein</strong> Link zur Shipment!<br><br><strong>Neue Relation:</strong><br>SalesTable &#8594; CustPackingSlipJour <strong>(1:n)</strong> <span class="new-tag">NEU</span><br><br><strong>Konsequenz:</strong><br>&#8226; Keine Rueckverfolgbarkeit Lieferschein &#8596; Shipment <span class="warn-tag">ACHTUNG</span></div>'
-};
-
-let currentStep = '0';
-function showPanel(t,b){document.getElementById('infoPanelTitle').textContent=t;document.getElementById('infoPanelBody').innerHTML=b;document.getElementById('infoPanel').classList.add('visible')}
-function closePanel(){document.getElementById('infoPanel').classList.remove('visible');document.querySelectorAll('.entity').forEach(e=>e.classList.remove('active'))}
-function updateDots(){document.querySelectorAll('.step-dot').forEach(d=>{const n=d.dataset.d;d.classList.remove('filled','current','current-a','current-b');const numCur=parseInt(currentStep);if(parseInt(n)<numCur)d.classList.add('filled');if(n==='6'&&(currentStep==='6a'||currentStep==='6b'))d.classList.add(currentStep==='6a'?'current-a':'current-b');else if(n===currentStep)d.classList.add('current')})}
-
-function goToStep(step){
-  currentStep=step;const numStep=parseInt(step);const isStep6=step==='6a'||step==='6b';
-  document.querySelectorAll('.entity').forEach(e=>e.classList.remove('revealed','glow','active','no-link'));
-  document.querySelectorAll('.rel-group').forEach(g=>g.classList.remove('visible'));
-  document.querySelectorAll('.process-badge').forEach(b=>{b.className='process-badge';b.style.opacity='.5'});
-  document.getElementById('oderLabel').classList.remove('show');
-  (stepEntities[step]||[]).forEach(id=>document.getElementById(id).classList.add('revealed'));
-  if(step==='6b')document.getElementById('e-link').classList.add('revealed','no-link');
-  (stepGlow[step]||[]).forEach(id=>document.getElementById(id).classList.add('glow'));
-  for(let s=1;s<=Math.min(numStep,5);s++)document.querySelectorAll('.rel-group[data-step="'+s+'"]').forEach(g=>g.classList.add('visible'));
-  if(step==='6a'){document.querySelectorAll('.rel-group[data-step="6a"]').forEach(g=>g.classList.add('visible'));document.querySelectorAll('.rel-group[data-step="6a-link"]').forEach(g=>g.classList.add('visible'))}
-  else if(step==='6b'){document.querySelectorAll('.rel-group[data-step="6a"]').forEach(g=>g.classList.add('visible'))}
-  ['1','2','3','4','5'].forEach(s=>{const b=document.getElementById('step-'+s);const si=parseInt(s);if(si<=numStep){b.classList.add(stepColors[s]);b.style.opacity=(s===step)?'1':'.75';if(si<numStep||isStep6)b.classList.add('done');if(s===step)b.classList.add('active-step')}});
-  /* Step 5: show both 6a/6b as pulsing choices */
-  if(step==='5'){const b6a=document.getElementById('step-6a');const b6b=document.getElementById('step-6b');b6a.classList.add('c6a','choice-ready');b6b.classList.add('c6b','choice-ready');b6a.style.opacity='';b6b.style.opacity='';document.getElementById('oderLabel').classList.add('show')}
-  if(isStep6){const b6=document.getElementById('step-'+step);b6.classList.add(stepColors[step]);b6.style.opacity='1';b6.classList.add('active-step');const other=step==='6a'?'6b':'6a';const bOther=document.getElementById('step-'+other);bOther.classList.add('choice-dimmed');bOther.style.opacity=''}
-  document.getElementById('step6options').classList.toggle('show',numStep>=5||isStep6);
-  document.getElementById('btnNext').style.display=(numStep>=5||isStep6)?'none':'';
-  showPanel('Schritt '+step,stepDescriptions[step]);
-  document.getElementById('btnPrev').disabled=step==='1';
-  updateDots();
-}
-function nextStep(){const idx=stepOrder.indexOf(currentStep);if(idx<stepOrder.length-1)goToStep(stepOrder[idx+1])}
-function prevStep(){if(currentStep==='6a'||currentStep==='6b'){goToStep('5');return}const idx=stepOrder.indexOf(currentStep);if(idx>0)goToStep(stepOrder[idx-1])}
-function resetSteps(){
-  currentStep='0';
-  document.querySelectorAll('.entity').forEach(e=>e.classList.remove('revealed','glow','active','no-link'));
-  document.querySelectorAll('.rel-group').forEach(g=>g.classList.remove('visible'));
-  document.querySelectorAll('.process-badge').forEach(b=>{b.className='process-badge';b.style.opacity='.5'});
-  document.getElementById('step6options').classList.remove('show');
-  document.getElementById('oderLabel').classList.remove('show');
-  document.getElementById('btnNext').style.display='';
-  closePanel();document.getElementById('btnPrev').disabled=true;updateDots();
-}
-document.querySelectorAll('.entity').forEach(el=>{el.addEventListener('click',()=>{const k=el.dataset.info;if(!entityInfo[k])return;document.querySelectorAll('.entity').forEach(e=>e.classList.remove('active'));el.classList.add('active');showPanel(entityInfo[k].title,entityInfo[k].body)})});
-document.querySelectorAll('.process-badge').forEach(el=>{el.addEventListener('click',()=>goToStep(el.dataset.step))});
-document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key===' '){e.preventDefault();nextStep()}if(e.key==='ArrowLeft'){e.preventDefault();prevStep()}if(e.key==='Escape')resetSteps()});
-</script>
 </body>
 </html>

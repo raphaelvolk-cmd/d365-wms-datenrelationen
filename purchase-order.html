@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>D365 FO – Purchase Order (P2P)</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;background:#f0f2f5;color:#1a1a1a;display:flex;height:100vh}
+.sidebar{width:260px;background:#1e293b;color:#fff;flex-shrink:0;display:flex;flex-direction:column;overflow-y:auto}
+.sidebar-header{padding:20px 20px 16px;border-bottom:1px solid #334155}
+.sidebar-header h2{font-size:15px;font-weight:700}
+.sidebar-header .sub{font-size:10px;opacity:.5;margin-top:3px}
+.nav-section{padding:12px 0 4px}
+.nav-section-title{padding:4px 20px 8px;font-size:9px;text-transform:uppercase;letter-spacing:1.2px;color:#475569;font-weight:700}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 20px;font-size:12px;color:#94a3b8;text-decoration:none;transition:all .15s;border-left:3px solid transparent}
+.nav-item:hover{background:#334155;color:#e2e8f0;border-left-color:#6366f1}
+.nav-item.active{background:#6366f1;color:#fff;border-left-color:#818cf8}
+.nav-icon{width:18px;height:18px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0}
+.nav-icon.so{background:#7c3aed;color:#fff}.nav-icon.po{background:#3b82f6;color:#fff}
+.nav-icon.pr{background:#f59e0b;color:#fff}.nav-icon.to{background:#14b8a6;color:#fff}
+.nav-icon.qo{background:#ef4444;color:#fff}.nav-icon.im{background:#8b5cf6;color:#fff}
+.nav-badge{margin-left:auto;font-size:9px;padding:2px 7px;border-radius:8px;font-weight:600}
+.nav-badge.ready{background:#dcfce7;color:#166534}.nav-badge.wip{background:#fef3c7;color:#92400e}
+.sidebar-footer{margin-top:auto;padding:16px 20px;border-top:1px solid #334155;font-size:9px;color:#475569;line-height:1.5}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+
+/* Process page styles */
+.page-header{background:#3b82f6;color:#fff;padding:10px 24px;display:flex;align-items:center;gap:12px}
+.page-header h1{font-size:14px;font-weight:600}
+.page-header .page-sub{font-size:10px;opacity:.7}
+.legend-bar{background:#fff;border-bottom:1px solid #e2e8f0;padding:5px 24px;display:flex;gap:18px;align-items:center;font-size:10px;color:#64748b}
+.legend-item{display:flex;align-items:center;gap:5px}
+.legend-line{width:24px;height:0}
+.legend-line.one-n{border-top:2.5px solid #6366f1}
+.legend-line.one-one{border-top:2.5px solid #10b981}
+.canvas-wrap{flex:1;overflow:auto;position:relative}
+.canvas{position:relative;width:1200px;height:700px;margin:0 auto}
+.lines-layer{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1}
+.rel-group{opacity:0;transition:opacity .6s ease}
+.rel-group.visible{opacity:1}
+.entity{position:absolute;background:#fff;border:2px solid #e2e8f0;border-radius:10px;width:200px;cursor:pointer;transition:all .3s ease;z-index:10;box-shadow:0 1px 4px rgba(0,0,0,.06);overflow:hidden;opacity:.3}
+.entity.revealed{opacity:1}
+.entity:hover{border-color:#6366f1;box-shadow:0 4px 20px rgba(99,102,241,.18);transform:translateY(-2px);opacity:1}
+.entity.active{border-color:#6366f1;opacity:1;box-shadow:0 0 0 3px rgba(99,102,241,.2)}
+.entity-header{padding:7px 10px 3px;border-bottom:1px solid #f1f5f9;background:#f8fafc}
+.entity-header h3{font-size:11px;font-weight:700;color:#1e293b}
+.entity-header .table-name{font-size:8px;color:#6366f1;font-family:'Cascadia Code','Fira Code',monospace;margin-top:1px}
+.entity-body{padding:5px 10px 6px}
+.entity-body .pk{font-size:8px;font-family:monospace;color:#64748b;margin-bottom:2px}
+.entity-body .pk span{background:#e0e7ff;color:#4338ca;padding:1px 3px;border-radius:3px;font-weight:600}
+.entity-body .desc{font-size:9px;color:#64748b;line-height:1.3}
+.card-badge{font-size:9px;font-weight:700;fill:#fff;text-anchor:middle;dominant-baseline:central}
+.entity-footer{overflow:hidden}
+.step-tag{display:flex;align-items:center;gap:5px;padding:0 10px;max-height:0;opacity:0;transition:all .35s ease;font-size:9px;font-weight:700;color:#fff;cursor:pointer;overflow:hidden;border-top:1px solid rgba(255,255,255,.2)}
+.step-tag.visible{max-height:28px;opacity:1;padding:4px 10px}
+.step-tag .tag-num{width:14px;height:14px;border-radius:50%;background:rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:800;flex-shrink:0}
+.step-tag.pulse{animation:tagPulse 1.2s ease-in-out infinite}
+@keyframes tagPulse{0%,100%{opacity:.7}50%{opacity:1}}
+.step-tag.dimmed{opacity:.2!important;max-height:28px;padding:4px 10px}
+.bg1{background:#7c3aed}.bg3{background:#3b82f6}
+.bg4{background:#0ea5e9}.bg5{background:#14b8a6}
+.entity.glow{animation:pg 1.5s ease-in-out infinite}
+@keyframes pg{0%,100%{box-shadow:0 0 0 3px rgba(99,102,241,.15)}50%{box-shadow:0 0 0 8px rgba(99,102,241,.3)}}
+.info-panel{position:fixed;bottom:16px;right:16px;width:340px;background:#fff;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.12);border:1px solid #e2e8f0;z-index:200;overflow:hidden;transition:all .3s ease;max-height:0;opacity:0}
+.info-panel.visible{max-height:600px;opacity:1}
+.info-panel-header{padding:8px 12px;background:#1e293b;color:#fff;font-size:11px;font-weight:600;display:flex;justify-content:space-between;align-items:center}
+.info-panel-header .close-btn{background:none;border:none;color:#fff;cursor:pointer;font-size:14px;opacity:.7}
+.info-panel-header .close-btn:hover{opacity:1}
+.info-panel-body{padding:10px 12px;font-size:10px;line-height:1.6;color:#475569;max-height:480px;overflow-y:auto}
+.info-panel-body strong{color:#1e293b}
+.info-panel-body .field-item{padding:2px 0;border-bottom:1px solid #f1f5f9;font-family:monospace;font-size:9px}
+.info-panel-body .new-tag{display:inline-block;background:#dcfce7;color:#166534;font-size:8px;font-weight:700;padding:1px 4px;border-radius:3px;margin-left:2px}
+.info-panel-body .warn-tag{display:inline-block;background:#fef2f2;color:#991b1b;font-size:8px;font-weight:700;padding:1px 4px;border-radius:3px;margin-left:2px}
+.step-controls{position:fixed;bottom:16px;left:calc(260px + 50%);transform:translateX(-50%);display:flex;gap:5px;z-index:200;background:#fff;padding:5px 10px;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.1);border:1px solid #e2e8f0;align-items:center}
+.step-btn{padding:5px 12px;border-radius:6px;border:none;font-size:10px;font-weight:600;cursor:pointer;transition:all .2s}
+.step-btn.prev{background:#e2e8f0;color:#475569}.step-btn.prev:hover{background:#cbd5e1}
+.step-btn.next{background:#6366f1;color:#fff}.step-btn.next:hover{background:#4f46e5}
+.step-btn.reset{background:#f1f5f9;color:#64748b}.step-btn.reset:hover{background:#e2e8f0}
+.step-btn:disabled{opacity:.3;cursor:default}
+.step-indicator{display:flex;align-items:center;gap:3px;padding:0 4px}
+.step-dot{width:6px;height:6px;border-radius:50%;background:#e2e8f0;transition:all .3s}
+.step-dot.filled{background:#6366f1}.step-dot.current{background:#6366f1;transform:scale(1.4)}
+.separator{width:1px;height:20px;background:#e2e8f0;margin:0 2px}
+</style>
+</head>
+<body>
+
+<nav class="sidebar">
+  <div class="sidebar-header"><h2>D365 FO Explorer</h2><div class="sub">Prozesse &amp; Datenmodelle</div></div>
+  <div class="nav-section">
+    <div class="nav-section-title">Prozesse</div>
+    <a class="nav-item" href="index.html"><div class="nav-icon so">H</div> Hub</a>
+    <a class="nav-item" href="sales-order-wms.html"><div class="nav-icon so">SO</div> Sales Order &amp; WMS <span class="nav-badge ready">Live</span></a>
+    <a class="nav-item active" href="purchase-order.html"><div class="nav-icon po">PO</div> Purchase Order (P2P) <span class="nav-badge ready">Live</span></a>
+    <a class="nav-item" href="production-order.html"><div class="nav-icon pr">PR</div> Production Order <span class="nav-badge wip">Geplant</span></a>
+    <a class="nav-item" href="transfer-order.html"><div class="nav-icon to">TO</div> Transfer Order <span class="nav-badge wip">Geplant</span></a>
+    <a class="nav-item" href="quality-order.html"><div class="nav-icon qo">QO</div> Quality Order <span class="nav-badge wip">Geplant</span></a>
+    <a class="nav-item" href="inventory-movement.html"><div class="nav-icon im">IM</div> Inventory Movement <span class="nav-badge wip">Geplant</span></a>
+  </div>
+  <div class="sidebar-footer">D365 Finance &amp; Operations<br>Datenrelationen &amp; Prozessablaeufe</div>
+</nav>
+
+<main class="main">
+<div class="page-header">
+  <div><h1>Purchase Order (P2P)</h1><div class="page-sub">Create PO &rarr; Confirm &rarr; Product Receipt &rarr; Put Away &rarr; Vendor Invoice</div></div>
+</div>
+<div class="legend-bar">
+  <div class="legend-item"><div class="legend-line one-n"></div> 1 : n</div>
+  <div class="legend-item"><div class="legend-line one-one"></div> 1 : 1</div>
+</div>
+
+<div class="canvas-wrap">
+<div class="canvas" id="canvas">
+  <svg class="lines-layer" viewBox="0 0 1200 700">
+    <defs>
+      <marker id="a1n" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><path d="M0,0 L10,3.5 L0,7" fill="#6366f1"/></marker>
+      <marker id="a11" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><path d="M0,0 L10,3.5 L0,7" fill="#10b981"/></marker>
+    </defs>
+    <!-- Step 1: PurchTable -> PurchLine (1:n, vertical) -->
+    <g class="rel-group" data-step="1"><line x1="140" y1="130" x2="140" y2="240" stroke="#6366f1" stroke-width="2.5" marker-end="url(#a1n)"/><rect x="114" y="177" width="54" height="16" rx="8" fill="#6366f1"/><text x="141" y="186" class="card-badge">1 : n</text></g>
+    <!-- Step 1: PurchLine -> WHSLoadTable (1:n, diagonal) -->
+    <g class="rel-group" data-step="1"><line x1="245" y1="270" x2="385" y2="105" stroke="#6366f1" stroke-width="2.5" marker-end="url(#a1n)"/><rect x="287" y="172" width="54" height="16" rx="8" fill="#6366f1"/><text x="314" y="181" class="card-badge">1 : n</text></g>
+    <!-- Step 3: WHSLoadTable -> WHSWorkTable (1:n, vertical) -->
+    <g class="rel-group" data-step="3"><line x1="488" y1="130" x2="488" y2="240" stroke="#6366f1" stroke-width="2.5" marker-end="url(#a1n)"/><rect x="462" y="177" width="54" height="16" rx="8" fill="#6366f1"/><text x="489" y="186" class="card-badge">1 : n</text></g>
+    <!-- Step 3: PurchTable -> VendPackingSlipJour (1:n, vertical left side) -->
+    <g class="rel-group" data-step="3"><path d="M70,130 L70,420" stroke="#6366f1" stroke-width="2.5" fill="none" marker-end="url(#a1n)"/><rect x="44" y="320" width="54" height="16" rx="8" fill="#6366f1"/><text x="71" y="329" class="card-badge">1 : n</text></g>
+    <!-- Step 5: PurchTable -> VendInvoiceJour (1:n, diagonal to bottom right) -->
+    <g class="rel-group" data-step="5"><line x1="245" y1="105" x2="385" y2="465" stroke="#6366f1" stroke-width="2.5" marker-end="url(#a1n)"/><rect x="287" y="277" width="54" height="16" rx="8" fill="#6366f1"/><text x="314" y="286" class="card-badge">1 : n</text></g>
+  </svg>
+
+  <!-- Row 1 -->
+  <div class="entity" id="e-purch-order" style="left:40px;top:45px" data-info="purch-order">
+    <div class="entity-header"><h3>Purchase Order</h3><div class="table-name">PurchTable</div></div>
+    <div class="entity-body"><div class="pk"><span>PK</span> PurchId</div><div class="desc">Bestellkopf</div></div>
+    <div class="entity-footer"><div class="step-tag bg1" data-step="1"><div class="tag-num">1</div> Create &amp; Confirm PO</div></div>
+  </div>
+  <div class="entity" id="e-load" style="left:385px;top:45px" data-info="load">
+    <div class="entity-header"><h3>Inbound Load</h3><div class="table-name">WHSLoadTable</div></div>
+    <div class="entity-body"><div class="pk"><span>PK</span> LoadId</div><div class="desc">Eingangsladung</div></div>
+    <div class="entity-footer"></div>
+  </div>
+
+  <!-- Row 2 -->
+  <div class="entity" id="e-purch-line" style="left:40px;top:245px" data-info="purch-line">
+    <div class="entity-header"><h3>Purchase Line</h3><div class="table-name">PurchLine</div></div>
+    <div class="entity-body"><div class="pk"><span>PK</span> PurchId + LineNum</div><div class="desc">Bestellposition</div></div>
+    <div class="entity-footer"></div>
+  </div>
+  <div class="entity" id="e-work" style="left:385px;top:245px" data-info="work">
+    <div class="entity-header"><h3>Work (Put Away)</h3><div class="table-name">WHSWorkTable</div></div>
+    <div class="entity-body"><div class="pk"><span>PK</span> WorkId</div><div class="desc">Einlagerungsarbeit</div></div>
+    <div class="entity-footer"><div class="step-tag bg4" data-step="4"><div class="tag-num">4</div> Put Away (Pick &amp; Put)</div></div>
+  </div>
+
+  <!-- Row 3 -->
+  <div class="entity" id="e-product-receipt" style="left:40px;top:425px" data-info="product-receipt">
+    <div class="entity-header"><h3>Product Receipt</h3><div class="table-name">VendPackingSlipJour</div></div>
+    <div class="entity-body"><div class="pk"><span>PK</span> PackingSlipId + PurchId</div><div class="desc">Produktzugang / Wareneingang</div></div>
+    <div class="entity-footer"><div class="step-tag bg3" data-step="3"><div class="tag-num">3</div> Product Receipt</div></div>
+  </div>
+  <div class="entity" id="e-vendor-invoice" style="left:385px;top:425px" data-info="vendor-invoice">
+    <div class="entity-header"><h3>Vendor Invoice</h3><div class="table-name">VendInvoiceJour</div></div>
+    <div class="entity-body"><div class="pk"><span>PK</span> InvoiceId + PurchId</div><div class="desc">Kreditorenrechnung</div></div>
+    <div class="entity-footer"><div class="step-tag bg5" data-step="5"><div class="tag-num">5</div> Vendor Invoice</div></div>
+  </div>
+</div>
+</div>
+</main>
+
+<div class="info-panel" id="infoPanel"><div class="info-panel-header"><span id="infoPanelTitle">Details</span><button class="close-btn" onclick="closePanel()">&#10005;</button></div><div class="info-panel-body" id="infoPanelBody"></div></div>
+<div class="step-controls">
+  <button class="step-btn reset" onclick="resetSteps()">Reset</button>
+  <button class="step-btn prev" id="btnPrev" onclick="prevStep()" disabled>&#8592;</button>
+  <div class="step-indicator" id="stepDots"><div class="step-dot" data-d="1"></div><div class="step-dot" data-d="2"></div><div class="step-dot" data-d="3"></div><div class="step-dot" data-d="4"></div><div class="step-dot" data-d="5"></div></div>
+  <button class="step-btn next" id="btnNext" onclick="nextStep()">&#8594;</button>
+</div>
+
+<script>
+const stepEntities={'1':['e-purch-order','e-purch-line'],'2':['e-purch-order','e-purch-line','e-load'],'3':['e-purch-order','e-purch-line','e-load','e-product-receipt','e-work'],'4':['e-purch-order','e-purch-line','e-load','e-product-receipt','e-work'],'5':['e-purch-order','e-purch-line','e-load','e-product-receipt','e-work','e-vendor-invoice']};
+const stepGlow={'1':['e-purch-order','e-purch-line'],'2':['e-load'],'3':['e-product-receipt','e-work'],'4':['e-work'],'5':['e-vendor-invoice']};
+const stepTags={'1':['1'],'2':['1'],'3':['1','3'],'4':['1','3','4'],'5':['1','3','4','5']};
+const stepOrder=['1','2','3','4','5'];
+const entityInfo={
+'purch-order':{title:'Purchase Order (PurchTable)',body:'<strong>Zweck:</strong> Bestellkopf<br><br><strong>Felder:</strong><div class="field-list"><div class="field-item">PurchId (PK)</div><div class="field-item">OrderAccount (FK &#8594; VendTable)</div><div class="field-item">PurchStatus</div><div class="field-item">DeliveryDate, CurrencyCode</div><div class="field-item">PurchaseType</div></div><br><strong>Relationen:</strong><br>&#8594; PurchLine <strong>(1:n)</strong><br>&#8594; VendPackingSlipJour <strong>(1:n)</strong><br>&#8594; VendInvoiceJour <strong>(1:n)</strong>'},
+'purch-line':{title:'Purchase Line (PurchLine)',body:'<strong>Zweck:</strong> Bestellposition<br><br><strong>Felder:</strong><div class="field-list"><div class="field-item">PurchId + LineNum (PK)</div><div class="field-item">ItemId, PurchQty, PurchPrice</div><div class="field-item">LineAmount</div><div class="field-item">InventDimId (FK)</div></div><br><strong>Relationen:</strong><br>&#8592; PurchTable <strong>(n:1)</strong><br>&#8594; WHSLoadTable <strong>(1:n)</strong>'},
+'load':{title:'Inbound Load (WHSLoadTable)',body:'<strong>Zweck:</strong> Eingangsladung<br><br><strong>Felder:</strong><div class="field-list"><div class="field-item">LoadId (PK)</div><div class="field-item">LoadStatus</div><div class="field-item">LoadDirection (Inbound)</div><div class="field-item">CarrierCode</div></div><br><strong>Relationen:</strong><br>&#8592; PurchLine <strong>(n:1)</strong><br>&#8594; WHSWorkTable <strong>(1:n)</strong>'},
+'work':{title:'Work &ndash; Put Away (WHSWorkTable)',body:'<strong>Zweck:</strong> Einlagerungsarbeit (Put Away)<br><br><strong>Felder:</strong><div class="field-list"><div class="field-item">WorkId (PK)</div><div class="field-item">WorkType (PurchPutAway)</div><div class="field-item">WorkStatus (Open, InProcess, Closed)</div><div class="field-item">LoadId (FK)</div></div><br><strong>Work Lines (WHSWorkLine):</strong><br>&#8226; <strong>Pick</strong> &#8211; Ware von Wareneingangszone entnehmen<br>&#8226; <strong>Put</strong> &#8211; Ware in Lagerplatz einlagern<br><br><strong>Relationen:</strong><br>&#8592; WHSLoadTable <strong>(n:1)</strong>'},
+'product-receipt':{title:'Product Receipt (VendPackingSlipJour)',body:'<strong>Zweck:</strong> Produktzugang / Wareneingang<br><br><strong>Felder:</strong><div class="field-list"><div class="field-item">PackingSlipId + PurchId (PK)</div><div class="field-item">DeliveryDate</div><div class="field-item">Qty</div><div class="field-item">AccountingDate</div></div><br><strong>Relationen:</strong><br>&#8592; PurchTable <strong>(n:1)</strong>'},
+'vendor-invoice':{title:'Vendor Invoice (VendInvoiceJour)',body:'<strong>Zweck:</strong> Kreditorenrechnung<br><br><strong>Felder:</strong><div class="field-list"><div class="field-item">InvoiceId + PurchId (PK)</div><div class="field-item">InvoiceDate</div><div class="field-item">InvoiceAmount</div><div class="field-item">InvoiceAccount (FK)</div><div class="field-item">Approved</div></div><br><strong>Relationen:</strong><br>&#8592; PurchTable <strong>(n:1)</strong>'}};
+const stepDescriptions={
+'1':'<strong>1. Create &amp; Confirm PO</strong><br><br>Bestellung anlegen und best&auml;tigen. PurchTable + PurchLine erstellt.<br><br><strong>Was passiert:</strong><br>&#8226; PurchTable (Bestellkopf) wird angelegt<br>&#8226; PurchLine (Bestellpositionen) werden erfasst<br>&#8226; Bestellung wird best&auml;tigt (PurchStatus &#8594; Confirmed)<br><br><strong>Neue Relationen:</strong><br>PurchTable &#8594; PurchLine <strong>(1:n)</strong> <span class="new-tag">NEU</span>',
+'2':'<strong>2. Inbound Load</strong><br><br>Eingangsladung wird zugeordnet. WHSLoadTable erstellt.<br><br><strong>Was passiert:</strong><br>&#8226; WHSLoadTable (Inbound) wird erzeugt<br>&#8226; Ladung der Bestellposition zugeordnet<br>&#8226; LoadDirection = Inbound<br><br><strong>Neue Relation:</strong><br>PurchLine &#8594; WHSLoadTable <strong>(1:n)</strong> <span class="new-tag">NEU</span>',
+'3':'<strong>3. Product Receipt</strong><br><br>Wareneingang buchen. VendPackingSlipJour erstellt. WHSWorkTable (Put Away) erzeugt.<br><br><strong>Was passiert:</strong><br>&#8226; VendPackingSlipJour erstellt<br>&#8226; Bestand wird physisch zugef&uuml;hrt<br>&#8226; WHSWorkTable (Put Away) wird erzeugt<br>&#8226; Pick: Wareneingangszone &#8594; Put: Lagerplatz<br><br><strong>Neue Relationen:</strong><br>PurchTable &#8594; VendPackingSlipJour <strong>(1:n)</strong> <span class="new-tag">NEU</span><br>WHSLoadTable &#8594; WHSWorkTable <strong>(1:n)</strong> <span class="new-tag">NEU</span>',
+'4':'<strong>4. Put Away</strong><br><br>Einlagerungsarbeit ausf&uuml;hren. Ware von Wareneingangszone in Lagerplatz.<br><br><strong>Was passiert:</strong><br>&#8226; <strong>Pick:</strong> Ware von Wareneingangszone entnehmen<br>&#8226; <strong>Put:</strong> Ware in Lagerplatz einlagern<br>&#8226; WorkStatus &#8594; Closed<br><br><em>Keine neuen Relationen</em>',
+'5':'<strong>5. Vendor Invoice</strong><br><br>Kreditorenrechnung buchen. VendInvoiceJour erstellt. Bestellung abgeschlossen.<br><br><strong>Was passiert:</strong><br>&#8226; VendInvoiceJour erstellt<br>&#8226; Rechnungsabgleich (3-Way-Match)<br>&#8226; Bestand finanziell gebucht<br>&#8226; PurchStatus &#8594; Invoiced<br><br><strong>Neue Relation:</strong><br>PurchTable &#8594; VendInvoiceJour <strong>(1:n)</strong> <span class="new-tag">NEU</span>'};
+let currentStep='0';
+function showPanel(t,b){document.getElementById('infoPanelTitle').textContent=t;document.getElementById('infoPanelBody').innerHTML=b;document.getElementById('infoPanel').classList.add('visible')}
+function closePanel(){document.getElementById('infoPanel').classList.remove('visible');document.querySelectorAll('.entity').forEach(e=>e.classList.remove('active'))}
+function updateDots(){document.querySelectorAll('.step-dot').forEach(d=>{const n=d.dataset.d;d.classList.remove('filled','current');const c=parseInt(currentStep);if(parseInt(n)<c)d.classList.add('filled');if(n===currentStep)d.classList.add('current')})}
+function goToStep(step){currentStep=step;
+document.querySelectorAll('.entity').forEach(e=>e.classList.remove('revealed','glow','active'));
+document.querySelectorAll('.rel-group').forEach(g=>g.classList.remove('visible'));
+document.querySelectorAll('.step-tag').forEach(t=>{t.classList.remove('visible','pulse','dimmed')});
+(stepEntities[step]||[]).forEach(id=>document.getElementById(id).classList.add('revealed'));
+(stepGlow[step]||[]).forEach(id=>document.getElementById(id).classList.add('glow'));
+const n=parseInt(step);
+for(let s=1;s<=n;s++)document.querySelectorAll('.rel-group[data-step="'+s+'"]').forEach(g=>g.classList.add('visible'));
+(stepTags[step]||[]).forEach(s=>{document.querySelectorAll('.step-tag[data-step="'+s+'"]').forEach(t=>t.classList.add('visible'))});
+showPanel('Schritt '+step,stepDescriptions[step]);
+document.getElementById('btnPrev').disabled=step==='1';
+document.getElementById('btnNext').disabled=step==='5';
+updateDots()}
+function nextStep(){const i=stepOrder.indexOf(currentStep);if(i<stepOrder.length-1)goToStep(stepOrder[i+1])}
+function prevStep(){const i=stepOrder.indexOf(currentStep);if(i>0)goToStep(stepOrder[i-1])}
+function resetSteps(){currentStep='0';document.querySelectorAll('.entity').forEach(e=>e.classList.remove('revealed','glow','active'));document.querySelectorAll('.rel-group').forEach(g=>g.classList.remove('visible'));document.querySelectorAll('.step-tag').forEach(t=>{t.classList.remove('visible','pulse','dimmed')});closePanel();document.getElementById('btnPrev').disabled=true;document.getElementById('btnNext').disabled=false;updateDots()}
+document.querySelectorAll('.entity').forEach(el=>{el.addEventListener('click',()=>{const k=el.dataset.info;if(!entityInfo[k])return;document.querySelectorAll('.entity').forEach(e=>e.classList.remove('active'));el.classList.add('active');showPanel(entityInfo[k].title,entityInfo[k].body)})});
+document.querySelectorAll('.step-tag').forEach(el=>{el.addEventListener('click',(e)=>{e.stopPropagation();goToStep(el.dataset.step)})});
+document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key===' '){e.preventDefault();nextStep()}if(e.key==='ArrowLeft'){e.preventDefault();prevStep()}if(e.key==='Escape')resetSteps()});
+</script>
+</body>
+</html>
